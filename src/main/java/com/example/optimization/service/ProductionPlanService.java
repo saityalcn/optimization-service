@@ -25,6 +25,9 @@ public class ProductionPlanService {
     RawMaterialInformationService rawMaterialInformationService;
 
     @Autowired
+    OrderPlannedProductionService orderPlannedProductionService;
+
+    @Autowired
     private final RestTemplate restTemplate;
 
     private final String apiUrl = "http://localhost:5000/";
@@ -48,32 +51,32 @@ public class ProductionPlanService {
         ProductionPlan productionPlan = repository.findById(productionPlanId).get();
         List<HashMap<String, Double>> optimizationResult = this.postOptimizationModel(productionPlan);
         List<OrderPlannedProduction> plannedProductionList = new ArrayList<>();
-        OrderPlannedProduction orderPlannedProduction = new OrderPlannedProduction();
-        orderPlannedProduction.setStartDate(productionPlan.getStartDate());
-        orderPlannedProduction.setEndDate(addDaysToDate(orderPlannedProduction.getStartDate(), optimizationResult.get(0).get("age")));
-        optimizationResult.get(0).remove("age");
-        plannedProductionList.add(orderPlannedProduction);
-        for(int i=1; i<optimizationResult.size(); i++){
-            orderPlannedProduction = new OrderPlannedProduction();
-            orderPlannedProduction.setStartDate(plannedProductionList.get(i-1).getEndDate());
-            orderPlannedProduction.setEndDate(addDaysToDate(orderPlannedProduction.getStartDate(), optimizationResult.get(i).get("age")));
-            optimizationResult.get(i).remove("age");
+        if(optimizationResult.size() > 0) {
+            OrderPlannedProduction orderPlannedProduction = new OrderPlannedProduction();
+            orderPlannedProduction.setStartDate(productionPlan.getStartDate());
+            orderPlannedProduction.setEndDate(addDaysToDate(orderPlannedProduction.getStartDate(), optimizationResult.get(0).get("age")));
+            optimizationResult.get(0).remove("age");
             plannedProductionList.add(orderPlannedProduction);
-        }
+            for (int i = 1; i < optimizationResult.size(); i++) {
+                orderPlannedProduction = new OrderPlannedProduction();
+                orderPlannedProduction.setStartDate(plannedProductionList.get(i - 1).getEndDate());
+                orderPlannedProduction.setEndDate(addDaysToDate(orderPlannedProduction.getStartDate(), optimizationResult.get(i).get("age")));
+                optimizationResult.get(i).remove("age");
+                plannedProductionList.add(orderPlannedProduction);
+            }
 
-        for(int i=0; i<optimizationResult.size(); i++){
-            plannedProductionList.get(i).setOrderPlannedProductionRawMaterials(new ArrayList<>());
-            for(String key : optimizationResult.get(i).keySet()){
-                OrderPlannedProductionRawMaterial rawMaterial = new OrderPlannedProductionRawMaterial();
-                rawMaterial.setInformation(rawMaterialInformationService.getByMaterialName(key));
-                rawMaterial.setQuantity(optimizationResult.get(i).get(key));
-                plannedProductionList.get(i).getOrderPlannedProductionRawMaterials().add(rawMaterial);
+            for (int i = 0; i < optimizationResult.size(); i++) {
+                plannedProductionList.get(i).setOrderPlannedProductionRawMaterials(new ArrayList<>());
+                for (String key : optimizationResult.get(i).keySet()) {
+                    OrderPlannedProductionRawMaterial rawMaterial = new OrderPlannedProductionRawMaterial();
+                    rawMaterial.setInformation(rawMaterialInformationService.getByMaterialName(key));
+                    rawMaterial.setQuantity(optimizationResult.get(i).get(key));
+                    plannedProductionList.get(i).getOrderPlannedProductionRawMaterials().add(rawMaterial);
+                }
             }
         }
 
-
-
-        productionPlan.setPlannedProductionList(plannedProductionList);
+        productionPlan.setPlannedProductionList(orderPlannedProductionService.addAll(plannedProductionList));
         repository.save(productionPlan);
     }
 

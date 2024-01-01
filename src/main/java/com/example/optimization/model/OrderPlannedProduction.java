@@ -26,7 +26,7 @@ public class OrderPlannedProduction {
     @JoinColumn(name = "order_id")
     private Order order;
 
-    @OneToMany
+    @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
     @JoinColumn(name="order_planned_production_id")
     private List<OrderPlannedProductionRawMaterial> orderPlannedProductionRawMaterials;
 }
