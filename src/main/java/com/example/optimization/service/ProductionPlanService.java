@@ -28,6 +28,9 @@ public class ProductionPlanService {
     OrderPlannedProductionService orderPlannedProductionService;
 
     @Autowired
+    MethodService methodService;
+
+    @Autowired
     private final RestTemplate restTemplate;
 
     private final String apiUrl = "http://localhost:5000/";
@@ -49,16 +52,29 @@ public class ProductionPlanService {
 
     public void saveOptimizedProduction(Long productionPlanId){
         ProductionPlan productionPlan = repository.findById(productionPlanId).get();
-        List<HashMap<String, Double>> optimizationResult = this.postOptimizationModel(productionPlan);
+        List<OrderPlannedProduction> plannedProductionList = new ArrayList<>();
+        List<Method> methods = methodService.getAllMethods();
+        for(Method method: methods){
+            plannedProductionList.addAll(createPlannedList(productionPlan, method));
+        }
+
+        productionPlan.setPlannedProductionList(orderPlannedProductionService.addAll(plannedProductionList));
+        repository.save(productionPlan);
+    }
+
+    private List<OrderPlannedProduction> createPlannedList(ProductionPlan productionPlan, Method method){
+        List<HashMap<String, Double>> optimizationResult = this.postOptimizationModel(productionPlan, method);
         List<OrderPlannedProduction> plannedProductionList = new ArrayList<>();
         if(optimizationResult.size() > 0) {
             OrderPlannedProduction orderPlannedProduction = new OrderPlannedProduction();
+            orderPlannedProduction.setMethod(method);
             orderPlannedProduction.setStartDate(productionPlan.getStartDate());
             orderPlannedProduction.setEndDate(addDaysToDate(orderPlannedProduction.getStartDate(), optimizationResult.get(0).get("age")));
             optimizationResult.get(0).remove("age");
             plannedProductionList.add(orderPlannedProduction);
             for (int i = 1; i < optimizationResult.size(); i++) {
                 orderPlannedProduction = new OrderPlannedProduction();
+                orderPlannedProduction.setMethod(method);
                 orderPlannedProduction.setStartDate(plannedProductionList.get(i - 1).getEndDate());
                 orderPlannedProduction.setEndDate(addDaysToDate(orderPlannedProduction.getStartDate(), optimizationResult.get(i).get("age")));
                 optimizationResult.get(i).remove("age");
@@ -76,22 +92,21 @@ public class ProductionPlanService {
             }
         }
 
-        productionPlan.setPlannedProductionList(orderPlannedProductionService.addAll(plannedProductionList));
-        repository.save(productionPlan);
+        return plannedProductionList;
     }
 
-    private List<HashMap<String, Double>> postOptimizationModel(ProductionPlan productionPlan){
+    private List<HashMap<String, Double>> postOptimizationModel(ProductionPlan productionPlan, Method method){
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
 
 
-        HttpEntity<Object> requestBody = new HttpEntity<>(createAlgorithmRequestDTO(productionPlan), headers);
+        HttpEntity<Object> requestBody = new HttpEntity<>(createAlgorithmRequestDTO(productionPlan, method), headers);
 
         ResponseEntity<List> response = restTemplate.postForEntity(apiUrl + "/optimization",requestBody, List.class);
         return (List<HashMap<String, Double>>) response.getBody();
     }
 
-    private AlgorithmRequestDTO createAlgorithmRequestDTO(ProductionPlan productionPlan){
+    private AlgorithmRequestDTO createAlgorithmRequestDTO(ProductionPlan productionPlan, Method method){
         AlgorithmRequestDTO dto = new AlgorithmRequestDTO();
         dto.setOrders(new ArrayList<>());
         for(Order order: productionPlan.getOrders()){
@@ -108,6 +123,9 @@ public class ProductionPlanService {
         }
 
         dto.getRawMaterials().put("age", getNumberOfDaysBetweenDates(productionPlan.getStartDate(), productionPlan.getEndDate()));
+        dto.setAlgorithmKey(method.getOptimizationAlgorithmKey());
+        dto.setOperationsResearchMethodKey(method.getOperationsResearchMethodKey());
+        dto.setRegressionModelKey(method.getRegressionModelKey());
 
         return dto;
     }

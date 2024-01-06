@@ -12,5 +12,8 @@ public class AlgorithmRequestDTO {
 
     private List<HashMap<String, Long>> orders;
     private HashMap<String, Long> rawMaterials;
+    private String algorithmKey;
+    private String operationsResearchMethodKey;
+    private String regressionModelKey;
 
 }

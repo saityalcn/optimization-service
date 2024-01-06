@@ -29,4 +29,9 @@ public class OrderPlannedProduction {
     @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
     @JoinColumn(name="order_planned_production_id")
     private List<OrderPlannedProductionRawMaterial> orderPlannedProductionRawMaterials;
+
+
+    @ManyToOne
+    @JoinColumn(name = "method_id")
+    private Method method;
 }
