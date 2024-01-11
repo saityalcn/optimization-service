@@ -3,6 +3,7 @@ package com.example.optimization.model;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.Data;
+import lombok.ToString;
 
 import java.util.List;
 
@@ -21,12 +22,13 @@ public class Order {
     private Long orderQuantity;
 
     @ManyToOne
-    @JsonIgnore
-    @JoinColumn(name = "order_id")
+    @JoinColumn(name = "production_plan_id")
     private ProductionPlan productionPlan;
 
     @ManyToOne
     @JoinColumn(name = "order_product_id")
     private Product product;
 
+    @Transient
+    private String productionPlanName;
 }

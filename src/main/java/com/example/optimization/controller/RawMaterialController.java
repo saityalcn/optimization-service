@@ -1,5 +1,6 @@
 package com.example.optimization.controller;
 
+import com.example.optimization.dto.RawMaterialDTO;
 import com.example.optimization.model.Product;
 import com.example.optimization.model.RawMaterial;
 import com.example.optimization.service.ProductService;
@@ -18,11 +19,11 @@ public class RawMaterialController {
 
     @RequestMapping(method = RequestMethod.GET, path = "/")
     public String getIndex(){
-        return "Product";
+        return "Raw Material";
     }
 
     @RequestMapping(method = RequestMethod.GET, path = "/getRawMaterials")
-    public List<RawMaterial> getRawMaterials(){
+    public List<RawMaterialDTO> getRawMaterials(){
         return service.getRawMaterials();
     }
 

@@ -1,5 +1,6 @@
 package com.example.optimization.controller;
 
+import com.example.optimization.dto.ProductionPlanDTO;
 import com.example.optimization.model.ProductionPlan;
 import com.example.optimization.model.RawMaterial;
 import com.example.optimization.service.ProductionPlanService;
@@ -22,7 +23,7 @@ public class ProductionPlanController {
     }
 
     @RequestMapping(method = RequestMethod.GET, path = "/getProductionPlans")
-    public List<ProductionPlan> getProductionPlans(){
+    public List<ProductionPlanDTO> getProductionPlans(){
         return service.getProductionPlans();
     }
 

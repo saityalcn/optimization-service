@@ -2,9 +2,12 @@ package com.example.optimization.service;
 
 import com.example.optimization.client.AlgorithmClient;
 import com.example.optimization.dto.AlgorithmRequestDTO;
+import com.example.optimization.dto.OrderDTO;
+import com.example.optimization.dto.ProductionPlanDTO;
 import com.example.optimization.model.*;
 import com.example.optimization.repository.ProductionPlanRepository;
 import org.aspectj.weaver.ast.Or;
+import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -14,6 +17,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 public class ProductionPlanService {
@@ -33,6 +37,7 @@ public class ProductionPlanService {
     @Autowired
     private final RestTemplate restTemplate;
 
+    private ModelMapper modelMapper = new ModelMapper();
     private final String apiUrl = "http://localhost:5000/";
 
 
@@ -42,8 +47,8 @@ public class ProductionPlanService {
         this.restTemplate = restTemplate;
     }
 
-    public List<ProductionPlan> getProductionPlans(){
-        return repository.findAll();
+    public List<ProductionPlanDTO> getProductionPlans(){
+        return repository.findAll().stream().map(e -> modelMapper.map(e, ProductionPlanDTO.class)).collect(Collectors.toList());
     }
 
     public ProductionPlan addProductionPlan(ProductionPlan plan){

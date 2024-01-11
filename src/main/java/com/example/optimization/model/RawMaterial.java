@@ -16,7 +16,7 @@ public class RawMaterial {
 
     @ManyToOne
     @JoinColumn(name = "raw_material_information_id")
-    RawMaterialInformation information;
+    private RawMaterialInformation information;
 
     @Column(name = "cost")
     private Long cost;
@@ -24,10 +24,12 @@ public class RawMaterial {
     @Column(name = "quantity")
     private Long quantity;
 
-    @JsonIgnore
     @ToString.Exclude
     @ManyToOne
     @JoinColumn(name = "production_plan_id")
-    ProductionPlan productionPlan;
+    private ProductionPlan productionPlan;
+
+    @Transient
+    private String productionPlanName;
 }
 
